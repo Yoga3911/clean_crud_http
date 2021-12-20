@@ -1,25 +1,9 @@
-import 'dart:async';
 import 'dart:developer';
 
 import 'package:clean_crud/controller/services.dart';
 import 'package:clean_crud/model/warga.dart';
+import 'package:clean_crud/util/debouncer.dart';
 import 'package:flutter/material.dart';
-
-class Debouncer {
-  int? millisecond;
-  VoidCallback? action;
-  Timer? _timer;
-
-  Debouncer({this.millisecond});
-
-  run(VoidCallback action) {
-    if (_timer != null) {
-      _timer!.cancel();
-    }
-
-    _timer = Timer(Duration(milliseconds: millisecond as int), action);
-  }
-}
 
 class HomePage extends StatefulWidget {
   const HomePage({Key? key}) : super(key: key);
