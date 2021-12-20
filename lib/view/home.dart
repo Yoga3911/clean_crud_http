@@ -1,8 +1,25 @@
+import 'dart:async';
 import 'dart:developer';
 
 import 'package:clean_crud/controller/services.dart';
 import 'package:clean_crud/model/warga.dart';
 import 'package:flutter/material.dart';
+
+class Debouncer {
+  int? millisecond;
+  VoidCallback? action;
+  Timer? _timer;
+
+  Debouncer({this.millisecond});
+
+  run(VoidCallback action) {
+    if (_timer != null) {
+      _timer!.cancel();
+    }
+
+    _timer = Timer(Duration(milliseconds: millisecond as int), action);
+  }
+}
 
 class HomePage extends StatefulWidget {
   const HomePage({Key? key}) : super(key: key);
@@ -14,16 +31,20 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   List<Warga>? _warga;
+  // Filter warga
+  List<Warga>? _filterWarga;
   TextEditingController? _nama;
   TextEditingController? _umur;
   Warga? _isSelected;
   bool? _isUpdating;
   String? _titleProgress;
+  final _debouncer = Debouncer(millisecond: 500);
 
   @override
   void initState() {
     super.initState();
     _warga = [];
+    _filterWarga = [];
     _nama = TextEditingController();
     _umur = TextEditingController();
     _isUpdating = false;
@@ -60,6 +81,7 @@ class _HomePageState extends State<HomePage> {
       _showProgrees(widget.title);
       setState(() {
         _warga = value;
+        _filterWarga = value;
       });
       inspect(value);
     });
@@ -159,7 +181,7 @@ class _HomePageState extends State<HomePage> {
               DataColumn(label: Text('UMUR')),
               DataColumn(label: Text('HAPUS')),
             ],
-            rows: _warga!
+            rows: _filterWarga!
                 .map((e) => DataRow(cells: [
                       DataCell(Text(e.id.toString()), onTap: () {
                         _showValues(e);
@@ -187,6 +209,26 @@ class _HomePageState extends State<HomePage> {
                           icon: const Icon(Icons.delete)))
                     ]))
                 .toList()),
+      ),
+    );
+  }
+
+  searchField() {
+    return Padding(
+      padding: const EdgeInsets.all(5),
+      child: TextField(
+        decoration: const InputDecoration(
+            hintText: "Cari berdasar nama", contentPadding: EdgeInsets.all(5)),
+        onChanged: (string) {
+          _debouncer.run(() {
+            setState(() {
+              _filterWarga = _warga!
+                  .where((element) =>
+                      element.nama.toLowerCase().contains(string.toLowerCase()))
+                  .toList();
+            });
+          });
+        },
       ),
     );
   }
@@ -253,6 +295,7 @@ class _HomePageState extends State<HomePage> {
                     ],
                   )
                 : const SizedBox(),
+            searchField(),
             Expanded(child: dataTable())
           ],
         ),
